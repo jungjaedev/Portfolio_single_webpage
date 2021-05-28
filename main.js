@@ -21,6 +21,7 @@ navbarMenu.addEventListener('click', event => {
   }
   navbarMenu.classList.remove('open');
   scrollIntoView(link);
+  selectNavItem(target);
 });
 
 // Navbar toggle button for small screen
@@ -98,8 +99,14 @@ function scrollIntoView(selector) {
 const sectionIds = ['#home', '#about', '#skills', '#work', '#testimonials', '#contact'];
 const sections = sectionIds.map(id => document.querySelector(id));
 const navItems = sectionIds.map(id => document.querySelector(`[data-link="${id}"]`));
-console.log(sections);
-console.log(navItems);
+
+let selectedNavIndex = 0;
+let selectevNavItem = navItems[0];
+function selectNavItem(selected) {
+  selectevNavItem.classList.remove('active');
+  selectevNavItem = selected;
+  selectevNavItem.classList.add('active');
+}
 
 const observerOptions = {
   root: null,
@@ -109,8 +116,27 @@ const observerOptions = {
 
 const observerCallback = (entries, observer) => {
   entries.forEach(entry => {
-    console.log(entry.target);
+    if (!entry.isIntersecting && entry.intersectionRatio > 0) {
+      const index = sectionIds.indexOf(`#${entry.target.id}`);
+
+      // 스크롤링이 아래로 되어서 페이지가 올라옴
+      if (entry.boundingClientRect.y < 0) {
+        selectedNavIndex = index + 1;
+      } else {
+        selectedNavIndex = index - 1;
+      }
+    }
   });
 };
+
 const observer = new IntersectionObserver(observerCallback, observerOptions);
 sections.forEach(section => observer.observe(section));
+
+window.addEventListener('wheel', () => {
+  if (window.scrollY === 0) {
+    selectedNavIndex = 0;
+  } else if (Math.ceil(window.scrollY + window.innerHeight) >= document.body.clientHeight) {
+    selectedNavIndex = navItems.length - 1;
+  }
+  selectNavItem(navItems[selectedNavIndex]);
+});
